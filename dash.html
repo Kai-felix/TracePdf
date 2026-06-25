@@ -464,7 +464,7 @@
 <script>
   const token = localStorage.getItem('token');
   const loginStatus = localStorage.getItem("loggedIn");
-  const BASE = "http://localhost:5000";
+ const API_BASE = "https://tracepdf-backend.onrender.com/api";
 
   if (loginStatus !== "true" && loginStatus !== "guest") {
     window.location.href = "index.html";
@@ -542,7 +542,7 @@
     document.getElementById('verifyModalBody').innerHTML = '<div class="spinner">Loading report…</div>';
 
     try {
-      const res  = await fetch(`${BASE}/api/pdf/verify/${pdfId}`, {
+      const res  = await fetch(`${API_BASE}/pdf/verify/${pdfId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();

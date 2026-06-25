@@ -114,62 +114,66 @@
 </div>
 
 <script>
+  const API_BASE = "https://tracepdf-backend.onrender.com/api";
 
-function showToast(message, type = 'info') {
-  const icons = { success: '✓', error: '✗', info: 'ℹ' };
-  const wrap = document.getElementById('toasts');
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.innerHTML = `<span class="toast-icon">${icons[type]}</span> ${message}`;
-  wrap.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
-}
-
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  if (!email || !password) {
-    showToast("Please enter email and password", "error");
-    return;
+  function showToast(message, type = 'info') {
+    const icons = { success: '✓', error: '✗', info: 'ℹ' };
+    const wrap = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span class="toast-icon">${icons[type]}</span> ${message}`;
+    wrap.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
   }
 
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+  async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-    const result = await res.json();
-    console.log("SERVER RESPONSE:", result);
-
-    if (res.ok) {
-      localStorage.setItem("loggedIn", "true");
-      localStorage.setItem("userEmail", result.user.email);
-      localStorage.setItem("userName", result.user.firstName);
-      localStorage.setItem("token", result.token);
-      showToast("Login successful! Redirecting...", "success");
-      setTimeout(() => window.location.href = "dash.html", 1500);
-    } else {
-      showToast(result.message, "error");
+    if (!email || !password) {
+      showToast("Please enter email and password", "error");
+      return;
     }
 
-  } catch (error) {
-    console.log("LOGIN ERROR:", error);
-    showToast("Server error. Try again later.", "error");
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const result = await res.json();
+      console.log("SERVER RESPONSE:", result);
+
+      if (res.ok) {
+        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("userEmail", result.user.email);
+        localStorage.setItem("userName", result.user.firstName);
+        localStorage.setItem("token", result.token);
+
+        showToast("Login successful! Redirecting...", "success");
+        setTimeout(() => {
+          window.location.href = "dash.html";
+        }, 1500);
+      } else {
+        showToast(result.message || result.error || "Login failed", "error");
+      }
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+      showToast("Server error. Try again later.", "error");
+    }
   }
-}
 
-function guest() {
-  localStorage.setItem("loggedIn", "guest");
-  localStorage.removeItem("userName");
-  localStorage.removeItem("userEmail");
-  localStorage.removeItem("token");
+  function guest() {
+    localStorage.setItem("loggedIn", "guest");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("token");
 
-  window.location.href = "dash.html";
-}
+    window.location.href = "dash.html";
+  }
 </script>
-
 </body>
 </html>

@@ -1,4 +1,4 @@
 node_modules/
 projectbacked/.env
-projectbacked/routes/upload.js
 projectbacked/uploads
+.vscode
