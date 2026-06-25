@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TracePdf</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      background: linear-gradient(120deg, #0f172a, #1e3a8a);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .box {
+      background: white;
+      width: 360px;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      text-align: center;
+      position: relative;
+    }
+
+    h2 {
+      color: #0f172a;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .login {
+      background: #1e8a30;
+      color: white;
+    }
+
+    .signup {
+      background: #10b951;
+      color: white;
+    }
+
+    .guest {
+      background: #127785;
+      color: white;
+    }
+
+    .msg {
+      font-size: 13px;
+      margin-top: 10px;
+      color: red;
+    }
+    .toast-wrap {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  z-index: 10;
+}
+.toast {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  animation: slideIn 0.3s ease;
+}
+.toast.success { background: #dcfce7; color: #166534; border-left: 4px solid #16a34a; }
+.toast.error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #dc2626; }
+.toast.info    { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Login</h2>
+
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+
+  <button class="login" onclick="login()">Login</button>
+
+  <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+
+  <button class="guest" onclick="guest()">Continue as Guest</button>
+  <p class="msg" id="msg"></p>
+  <div class="toast-wrap" id="toasts"></div>
+</div>
+
+<script>
+
+function showToast(message, type = 'info') {
+  const icons = { success: '✓', error: '✗', info: 'ℹ' };
+  const wrap = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span class="toast-icon">${icons[type]}</span> ${message}`;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if (!email || !password) {
+    showToast("Please enter email and password", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const result = await res.json();
+    console.log("SERVER RESPONSE:", result);
+
+    if (res.ok) {
+      localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("userEmail", result.user.email);
+      localStorage.setItem("userName", result.user.firstName);
+      localStorage.setItem("token", result.token);
+      showToast("Login successful! Redirecting...", "success");
+      setTimeout(() => window.location.href = "dash.html", 1500);
+    } else {
+      showToast(result.message, "error");
+    }
+
+  } catch (error) {
+    console.log("LOGIN ERROR:", error);
+    showToast("Server error. Try again later.", "error");
+  }
+}
+
+function guest() {
+  localStorage.setItem("loggedIn", "guest");
+  localStorage.removeItem("userName");
+  localStorage.removeItem("userEmail");
+  localStorage.removeItem("token");
+
+  window.location.href = "dash.html";
+}
+</script>
+
+</body>
+</html>

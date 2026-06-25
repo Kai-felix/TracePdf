@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sign Up</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f172a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .box {
+    background: white;
+    width: 400px;
+    padding: 20px;
+    border-radius: 12px;
+    position: relative;
+  }
+
+  input, select {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #1e8a23;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  .toast-wrap {
+  position: absolute;
+  top: -12px; 
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  z-index: 10;
+}
+.toast {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  animation: slideIn 0.3s ease;
+}
+.toast.success { background: #dcfce7; color: #166534; border-left: 4px solid #16a34a; }
+.toast.error   { background: #fee2e2; color: #991b1b; border-left: 4px solid #dc2626; }
+.toast.info    { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>Create Account</h2>
+
+  <input id="firstName" placeholder="First Name">
+  <input id="secondName" placeholder="Second Name">
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="register()">Sign Up</button>
+  <p>Already have an account?<a href="front.html">login</a></p>
+  <div class="toast-wrap" id="toasts"></div>
+</div>
+
+<script>
+  
+function showToast(message, type = 'info') {
+  const icons = {
+    success: '✓',
+    error: '✗',
+    info: 'ℹ'
+  };
+
+  const wrap = document.getElementById('toasts');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span class="toast-icon">${icons[type]}</span> ${message}`;
+  wrap.appendChild(t);
+
+  setTimeout(() => t.remove(), 3500);
+}
+
+async function register() {
+
+  const firstName = document.getElementById("firstName").value.trim();
+  const secondName = document.getElementById("secondName").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  if (!firstName || !secondName || !email || !password) {
+    showToast("Please fill in all fields.", "error");
+    return;
+  }
+
+  const data = {
+    firstName,
+    secondName,
+    email,
+    password
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:5000/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      localStorage.setItem("token", result.token);
+      localStorage.setItem("loggedIn", "true");
+      localStorage.setItem("userName", result.user.firstName);
+
+      showToast("Account created! Redirecting...", "success");
+
+      setTimeout(() => {
+        window.location.href = "dash.html";
+      }, 1500);
+
+    } else {
+      showToast(result.message || "Registration failed.", "error");
+    }
+
+  } catch (error) {
+    console.error(error);
+    showToast("Server error. Try again later.", "error");
+  }
+}
+
+
+</script>
+
+</body>
+</html>

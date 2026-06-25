@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:*; img-src 'self' data:">
+  <title>TracePdf – Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-dark:    #1a2b1a;
+      --bg-sidebar: #162016;
+      --bg-card:    #ffffff;
+      --accent:     #e87722;
+      --green:      #3dba4e;
+      --red:        #e03131;
+      --text-main:  #1a1a1a;
+      --text-muted: #555;
+      --border:     #e0e0e0;
+      --radius:     10px;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f0;
+      color: var(--text-main);
+    }
+
+    aside {
+      width: 200px;
+      min-height: 100vh;
+      background: var(--bg-sidebar);
+      display: flex;
+      flex-direction: column;
+      padding: 28px 16px;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+    }
+
+    .logo {
+      color: var(--green);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 36px;
+      letter-spacing: .5px;
+    }
+
+    nav a {
+      display: block;
+      color: #ccc;
+      text-decoration: none;
+      padding: 10px 12px;
+      border-radius: 6px;
+      margin-bottom: 4px;
+      font-size: .95rem;
+      transition: background .15s, color .15s;
+    }
+    nav a:hover, nav a.active {
+      background: rgba(255,255,255,.08);
+      color: #fff;
+    }
+
+    .logout-btn {
+      margin-top: auto;
+      background: rgb(155,96,19);
+      color: #fff;
+      border: none;
+      padding: 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .95rem;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .logout-btn:hover { background: #c0392b; }
+
+    main {
+      margin-left: 200px;
+      flex: 1;
+      padding: 32px;
+    }
+
+    .hero {
+      background: var(--bg-dark);
+      border-radius: var(--radius);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+    }
+    .hero h1 { color: var(--green); font-size: 2rem; margin-bottom: 6px; }
+    .hero p  { color: #aaa; font-size: .95rem; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+    }
+    .stat-card .label { font-weight: 600; font-size: 1rem; color: var(--text-main); margin-bottom: 12px; }
+    .stat-card .value { font-size: 2.4rem; font-weight: 700; color: var(--accent); }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      margin-bottom: 28px;
+    }
+    .card h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card h2 .icon { font-size: 1.2rem; }
+
+    .file-input-wrapper {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .file-input-wrapper input[type="file"] { flex: 1; font-size: .9rem; }
+
+    .upload-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 11px 26px;
+      border-radius: 6px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .upload-btn:hover { background: #c9651a; }
+
+    #guestBanner {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    #guestBanner.show { display: block; }
+    #guestBanner ul { margin: 12px 0 20px 20px; font-size: .95rem; }
+    #guestBanner .upload-btn { background: #1e8a30; margin-right: 10px; margin-bottom: 10px; }
+    #guestBanner .upload-btn:hover { background: #156a26; }
+
+    /* ── Activity list ── */
+    #activity-list { list-style: none; }
+    #activity-list li.activity-item {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    #activity-list li.activity-item:last-child { border-bottom: none; }
+
+    .activity-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .activity-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .dot-verified { background: var(--green); }
+    .dot-altered  { background: var(--red); }
+    .dot-pending  { background: var(--accent); }
+
+    .activity-meta { flex: 1; font-size: .93rem; line-height: 1.7; }
+    .activity-time { color: var(--text-muted); font-size: .82rem; white-space: nowrap; margin-left: auto; }
+
+    /* ── Per-PDF action buttons ── */
+    .pdf-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      margin-left: 24px;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      border: none;
+      font-size: .82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .action-btn:hover { opacity: .85; transform: translateY(-1px); }
+    .action-btn:active { transform: translateY(0); }
+
+    .btn-verify   { background: #1e8a30; color: #fff; }
+    .btn-compare  { background: #1a6bbf; color: #fff; }
+    .btn-download { background: #444;    color: #fff; }
+    .btn-flag     { background: #e03131; color: #fff; }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 32px 0;
+      font-size: .95rem;
+    }
+
+    /* ── Modal backdrop ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,.25);
+      animation: slideUp .2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 1;
+    }
+    .modal-header h3 { font-size: 1.1rem; font-weight: 700; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--red); }
+
+    .modal-body { padding: 20px 24px 24px; }
+
+    /* ── Verify report sections ── */
+    .report-section {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      background: #f8f9f8;
+      border-left: 4px solid var(--border);
+    }
+    .report-section.ok     { border-color: var(--green); }
+    .report-section.warn   { border-color: var(--accent); }
+    .report-section.danger { border-color: var(--red); }
+
+    .report-section h4 {
+      font-size: .88rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .report-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: .88rem;
+      padding: 3px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .report-row:last-child { border-bottom: none; }
+    .report-row .key   { color: var(--text-muted); }
+    .report-row .val   { font-weight: 600; }
+    .val-ok   { color: var(--green); }
+    .val-warn { color: var(--accent); }
+    .val-bad  { color: var(--red); }
+
+    /* ── Compare diff ── */
+    .diff-block {
+      background: #f0f2f0;
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: .83rem;
+      font-family: monospace;
+      word-break: break-all;
+      margin-bottom: 12px;
+    }
+    .diff-label { font-size: .78rem; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; }
+    .hash-orig  { color: var(--green); }
+    .hash-curr  { color: var(--red); }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .badge-ok     { background: #d4f5da; color: #1e6b28; }
+    .badge-warn   { background: #fff0e0; color: #a85200; }
+    .badge-danger { background: #ffe0e0; color: #a80000; }
+
+    .spinner {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 32px 0;
+      font-size: .95rem;
+      color: var(--text-muted);
+      gap: 10px;
+    }
+    .spinner::before {
+      content: '';
+      width: 20px; height: 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1a2b1a;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: .9rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,.3);
+      z-index: 2000;
+      transform: translateY(60px);
+      opacity: 0;
+      transition: all .3s ease;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+  <aside>
+    <div class="logo">TracePdf</div>
+    <nav>
+      <a href="dash.html" class="active">Dashboard</a>
+      <a href="upload.html">Upload PDF</a>
+    </nav>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </aside>
+
+  <main>
+    <div class="hero">
+      <h1 id="WelcomeMessage">Welcome, </h1>
+      <p>Securing Trust in Every PDF</p>
+    </div>
+
+    <div id="guestBanner">
+      <strong>You are browsing as a Guest.</strong><br><br>
+      Create an account or log in to:
+      <ul>
+        <li>Save your PDF history</li>
+        <li>Access your account from any device</li>
+        <li>Store verification records securely</li>
+      </ul>
+      <button onclick="window.location.href='signup.html'" class="upload-btn">Create Account</button>
+      <button onclick="window.location.href='../front.html'" class="upload-btn">Login</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="label">Verified PDFs</div>
+        <div class="value" id="stat-verified">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Altered PDFs</div>
+        <div class="value" id="stat-altered">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Pending Checks</div>
+        <div class="value" id="stat-pending">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">📄</span> Upload PDF Document</h2>
+      <div class="file-input-wrapper">
+        <input type="file" id="pdf-file" accept=".pdf" />
+      </div>
+      <button class="upload-btn" onclick="uploadPDF()">Upload PDF</button>
+      <div id="upload-msg" style="margin-top:12px;font-size:.9rem;color:var(--green);"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="icon">🕐</span> Recent Activities</h2>
+      <ul id="activity-list">
+        <li class="empty-state" id="empty-msg">No recent activity yet. Upload a PDF to get started.</li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- ── Verify Modal ── -->
+  <div class="modal-overlay" id="verifyModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🔍 Integrity Report</h3>
+        <button class="modal-close" onclick="closeModal('verifyModal')">×</button>
+      </div>
+      <div class="modal-body" id="verifyModalBody">
+        <div class="spinner">Loading report…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Compare Modal ── -->
+  <div class="modal-overlay" id="compareModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>🔄 Version Comparison</h3>
+        <button class="modal-close" onclick="closeModal('compareModal')">×</button>
+      </div>
+      <div class="modal-body" id="compareModalBody">
+        <div class="spinner">Loading comparison…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const loginStatus = localStorage.getItem("loggedIn");
+  const BASE = "http://localhost:5000";
+
+  if (loginStatus !== "true" && loginStatus !== "guest") {
+    window.location.href = "index.html";
+  }
+
+  let state = JSON.parse(localStorage.getItem('tracePdfState') || 'null') || {
+    verified: 0, altered: 0, pending: 0, activities: []
+  };
+
+  // pdfId is now stored directly on each activity object
+
+  function saveState() { localStorage.setItem('tracePdfState', JSON.stringify(state)); }
+
+  function renderStats() {
+    document.getElementById('stat-verified').textContent = state.verified;
+    document.getElementById('stat-altered').textContent  = state.altered;
+    document.getElementById('stat-pending').textContent  = state.pending;
+  }
+
+  function renderActivities() {
+    const list = document.getElementById('activity-list');
+    if (state.activities.length === 0) {
+      list.innerHTML = '<li class="empty-state">No recent activity yet. Upload a PDF to get started.</li>';
+      return;
+    }
+
+    list.innerHTML = state.activities.slice().reverse().map(a => {
+      const riskColor =
+        a.riskLevel === 'High'   ? '#e03131' :
+        a.riskLevel === 'Medium' ? '#e87722' : '#3dba4e';
+
+
+
+      return `
+        <li class="activity-item">
+          <div class="activity-header">
+            <span class="activity-dot dot-${a.type}"></span>
+            <div class="activity-meta">
+              <strong>${a.name}</strong><br>
+              Status: <strong>${a.type.charAt(0).toUpperCase() + a.type.slice(1)}</strong> &nbsp;|&nbsp;
+              Risk: <strong style="color:${riskColor}">${a.riskLevel || 'Low'}</strong><br>
+              ✍️ Signature: ${a.hasSignature ? '✅ Present' : '❌ None'} &nbsp;|&nbsp;
+              🔏 Tampered: ${a.signatureTampered ? '⚠️ YES' : '✅ No'}<br>
+              🗑️ Deletions: ${a.deletionDetected ? `⚠️ YES (${a.freedObjects} obj)` : '✅ None'} &nbsp;|&nbsp;
+              📝 Updates: ${a.hasIncrementalUpdates ? '⚠️ Yes' : '✅ None'}<br>
+              🚩 Flags: ${(a.flags || []).join(' · ') || 'None'}<br>
+              <small style="color:#888;word-break:break-all">🔑 ${a.hash || 'N/A'}</small>
+            </div>
+            <span class="activity-time">${a.time}</span>
+          </div>
+
+          <!-- ── Action buttons ── -->
+          <div class="pdf-actions">
+            ${a.pdfId ? `
+              <button class="action-btn btn-verify"   onclick="openVerify('${a.pdfId}')">🔍 Verify</button>
+              <button class="action-btn btn-compare"  onclick="openCompare('${a.pdfId}')">🔄 Compare Versions</button>
+              <button class="action-btn btn-download" onclick="downloadOriginal('${a.pdfId}', '${a.name}')">📥 Download Original</button>
+              <button class="action-btn btn-flag"     onclick="flagForReview('${a.pdfId}', '${a.name}')">🚩 Flag for Review</button>
+            ` : `
+              <span style="font-size:.8rem;color:var(--text-muted);margin-left:4px">
+                ⚠️ Actions unavailable — re-upload this file to enable buttons
+              </span>
+            `}
+          </div>
+        </li>
+      `;
+    }).join('');
+  }
+
+  /* ──────────────────────────────────────────
+     VERIFY modal
+  ────────────────────────────────────────── */
+  async function openVerify(pdfId) {
+    openModal('verifyModal');
+    document.getElementById('verifyModalBody').innerHTML = '<div class="spinner">Loading report…</div>';
+
+    try {
+      const res  = await fetch(`${BASE}/api/pdf/verify/${pdfId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Failed to load report');
+
+      const riskClass =
+        data.security?.riskLevel === 'High'   ? 'danger' :
+        data.security?.riskLevel === 'Medium' ? 'warn'   : 'ok';
+
+      const integrityClass = data.integrity?.isTampered ? 'danger' : 'ok';
+      const sigClass       = data.signature?.tampered   ? 'danger' :
+                             data.signature?.present    ? 'ok'     : 'warn';
+
+      document.getElementById('verifyModalBody').innerHTML = `
+
+        <div class="report-section ${riskClass}">
+          <h4>📊 Risk Summary</h4>
+          <div class="report-row">
+            <span class="key">Risk Level</span>
+            <span class="val ${riskClass === 'danger' ? 'val-bad' : riskClass === 'warn' ? 'val-warn' : 'val-ok'}">
+              ${data.security?.riskLevel || 'N/A'} (${data.security?.riskScore || 0} pts)
+            </span>
+          </div>
+          <div class="report-row">
+            <span class="key">Pages</span>
+            <span class="val">${data.pdf?.pages || 'N/A'}</span>
+          </div>
+          <div class="report-row">
+            <span class="key">File Size</span>
+            <span class="val">${data.pdf?.fileSize ? (data.pdf.fileSize / 1024).toFixed(1) + ' KB' : 'N/A'}</span>
+          </div>
+          <div class="report-row">
+            <span class="key">Uploaded</span>
+            <span class="val">${data.pdf?.uploadedAt ? new Date(data.pdf.uploadedAt).toLocaleString() : 'N/A'}</span>
+          </div>
+        </div>
+
+        <div class="report-section ${integrityClass}">
+          <h4>🔐 Integrity</h4>
+          <div class="report-row">
+            <span class="key">Tampered</span>
+            <span class="val ${data.integrity?.isTampered ? 'val-bad' : 'val-ok'}">
+              ${data.integrity?.isTampered ? '⚠️ YES' : '✅ No'}
+            </span>
+          </div>
+          <div class="report-row">
+            <span class="key">Hash Match</span>
+            <span class="val ${data.integrity?.hashMatch ? 'val-ok' : 'val-bad'}">
+              ${data.integrity?.hashMatch ? '✅ Match' : '❌ Mismatch'}
+            </span>
+          </div>
+          <div class="report-row">
+            <span class="key">Incremental Updates</span>
+            <span class="val ${data.security?.hasIncrementalUpdates ? 'val-warn' : 'val-ok'}">
+              ${data.security?.hasIncrementalUpdates
+                ? `⚠️ ${data.security.incrementalUpdateCount} update(s)`
+                : '✅ None'}
+            </span>
+          </div>
+          <div class="report-row">
+            <span class="key">Deleted Objects</span>
+            <span class="val ${data.security?.deletionDetected ? 'val-bad' : 'val-ok'}">
+              ${data.security?.deletionDetected
+                ? `⚠️ YES (${data.security.freedObjects} freed)`
+                : '✅ None'}
+            </span>
+          </div>
+        </div>
+
+        <div class="report-section ${sigClass}">
+          <h4>✍️ Signature</h4>
+          <div class="report-row">
+            <span class="key">Present</span>
+            <span class="val ${data.signature?.present ? 'val-ok' : 'val-warn'}">
+              ${data.signature?.present ? `✅ Yes (${data.signature.count})` : '❌ None'}
+            </span>
+          </div>
+          <div class="report-row">
+            <span class="key">Tampered</span>
+            <span class="val ${data.signature?.tampered ? 'val-bad' : 'val-ok'}">
+              ${data.signature?.tampered ? '⚠️ YES' : '✅ No'}
+            </span>
+          </div>
+        </div>
+
+        <div class="report-section ${data.security?.hasJavaScript || data.security?.hasEmbeddedFiles ? 'warn' : 'ok'}">
+          <h4>🔒 Security</h4>
+          <div class="report-row">
+            <span class="key">JavaScript Embedded</span>
+            <span class="val ${data.security?.hasJavaScript ? 'val-warn' : 'val-ok'}">
+              ${data.security?.hasJavaScript ? '⚠️ Yes' : '✅ No'}
+            </span>
+          </div>
+          <div class="report-row">
+            <span class="key">Embedded Files</span>
+            <span class="val ${data.security?.hasEmbeddedFiles ? 'val-warn' : 'val-ok'}">
+              ${data.security?.hasEmbeddedFiles ? '⚠️ Yes' : '✅ No'}
+            </span>
+          </div>
+        </div>
+
+        ${data.flags?.length ? `
+          <div class="report-section warn">
+            <h4>🚩 Flags</h4>
+            ${data.flags.map(f => `<div class="report-row"><span class="key">⚑</span><span class="val val-warn">${f}</span></div>`).join('')}
+          </div>` : ''}
+
+        ${data.metadata && (data.metadata.title || data.metadata.author) ? `
+          <div class="report-section">
+            <h4>📋 Metadata</h4>
+            ${data.metadata.title   ? `<div class="report-row"><span class="key">Title</span><span class="val">${data.metadata.title}</span></div>` : ''}
+            ${data.metadata.author  ? `<div class="report-row"><span class="key">Author</span><span class="val">${data.metadata.author}</span></div>` : ''}
+            ${data.metadata.creator ? `<div class="report-row"><span class="key">Creator</span><span class="val">${data.metadata.creator}</span></div>` : ''}
+            ${data.metadata.created ? `<div class="report-row"><span class="key">Created</span><span class="val">${data.metadata.created}</span></div>` : ''}
+          </div>` : ''}
+
+        <div style="margin-top:16px">
+          <div class="diff-label">SHA-256 Hash</div>
+          <div class="diff-block" style="color:#555">${data.integrity?.currentHash || 'N/A'}</div>
+        </div>
+      `;
+    } catch (err) {
+      document.getElementById('verifyModalBody').innerHTML =
+        `<div style="color:var(--red);padding:20px">❌ ${err.message}</div>`;
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     COMPARE modal
+  ────────────────────────────────────────── */
+  async function openCompare(pdfId) {
+    openModal('compareModal');
+    document.getElementById('compareModalBody').innerHTML = '<div class="spinner">Loading comparison…</div>';
+
+    try {
+      const res  = await fetch(`${BASE}/api/pdf/compare/${pdfId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Failed to load comparison');
+
+      const original = data.versions?.find(v => v.versionType === 'original');
+      const latest   = data.versions?.length ? data.versions[data.versions.length - 1] : null;
+      const modified = data.modificationDetected;
+
+      document.getElementById('compareModalBody').innerHTML = `
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <strong style="font-size:1rem">${data.pdf?.originalName || 'Unknown file'}</strong>
+          <span class="badge ${modified ? 'badge-danger' : 'badge-ok'}">
+            ${modified ? '⚠️ Modified' : '✅ Unchanged'}
+          </span>
+        </div>
+
+        <div class="report-section ${modified ? 'danger' : 'ok'}">
+          <h4>📊 Comparison Summary</h4>
+          <div class="report-row">
+            <span class="key">Total Versions</span>
+            <span class="val">${data.analysis?.totalVersions || 1}</span>
+          </div>
+          <div class="report-row">
+            <span class="key">Modification Detected</span>
+            <span class="val ${modified ? 'val-bad' : 'val-ok'}">${modified ? '⚠️ YES' : '✅ No'}</span>
+          </div>
+          <div class="report-row">
+            <span class="key">Signatures</span>
+            <span class="val">${data.analysis?.signatureCount || 0}</span>
+          </div>
+          <div class="report-row">
+            <span class="key">Incremental Updates</span>
+            <span class="val ${data.analysis?.hasIncrementalUpdates ? 'val-warn' : 'val-ok'}">
+              ${data.analysis?.hasIncrementalUpdates ? '⚠️ Yes' : '✅ None'}
+            </span>
+          </div>
+        </div>
+
+        ${original ? `
+          <div>
+            <div class="diff-label">🟢 Original Hash</div>
+            <div class="diff-block hash-orig">${original.hash || 'N/A'}</div>
+            <div class="diff-label">Size: ${original.fileSize ? (original.fileSize/1024).toFixed(1)+' KB' : 'N/A'} &nbsp;|&nbsp; Uploaded: ${original.timestamp ? new Date(original.timestamp).toLocaleString() : 'N/A'}</div>
+          </div>` : ''}
+
+        ${latest && latest.versionType !== 'original' ? `
+          <div style="margin-top:14px">
+            <div class="diff-label">🔴 Latest Version Hash (${latest.versionType})</div>
+            <div class="diff-block hash-curr">${latest.hash || 'N/A'}</div>
+            <div class="diff-label">Size: ${latest.fileSize ? (latest.fileSize/1024).toFixed(1)+' KB' : 'N/A'} &nbsp;|&nbsp; Modified: ${latest.timestamp ? new Date(latest.timestamp).toLocaleString() : 'N/A'}</div>
+          </div>` : ''}
+
+        ${data.modifications?.length ? `
+          <div class="report-section danger" style="margin-top:18px">
+            <h4>⚠️ Detected Changes</h4>
+            ${data.modifications.map(m => `
+              <div class="report-row">
+                <span class="key">${m.type}</span>
+                <span class="val val-${m.severity === 'High' ? 'bad' : 'warn'}">${m.description}</span>
+              </div>
+            `).join('')}
+          </div>` : ''}
+
+        ${data.versions?.length > 1 ? `
+          <div class="report-section" style="margin-top:18px">
+            <h4>🕒 Version History</h4>
+            ${data.versions.map(v => `
+              <div class="report-row">
+                <span class="key">${v.versionType}</span>
+                <span class="val" style="font-size:.8rem;text-align:right">
+                  ${v.description || ''}<br>
+                  <span style="color:#aaa">${v.timestamp ? new Date(v.timestamp).toLocaleString() : ''}</span>
+                </span>
+              </div>
+            `).join('')}
+          </div>` : ''}
+      `;
+    } catch (err) {
+      document.getElementById('compareModalBody').innerHTML =
+        `<div style="color:var(--red);padding:20px">❌ ${err.message}</div>`;
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     DOWNLOAD ORIGINAL
+  ────────────────────────────────────────── */
+  async function downloadOriginal(pdfId, filename) {
+    showToast(`📥 Downloading original…`);
+    try {
+      const res = await fetch(`${BASE}/api/pdf/download/${pdfId}?version=original`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = `original_${filename}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`✅ Downloaded original — ${filename}`);
+    } catch (err) {
+      showToast(`❌ Download failed: ${err.message}`);
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     FLAG FOR REVIEW
+  ────────────────────────────────────────── */
+  async function flagForReview(pdfId, filename) {
+    if (!confirm(`Flag "${filename}" for admin review? This will notify the TracePdf team.`)) return;
+    showToast('🚩 Flagging for review…');
+    try {
+      const res = await fetch(`${BASE}/api/pdf/flag/${pdfId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reason: 'User reported suspected tampering' })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to flag');
+      showToast('✅ Flagged for admin review');
+    } catch (err) {
+      showToast(`❌ ${err.message}`);
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     Modal helpers
+  ────────────────────────────────────────── */
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  // Close on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+  });
+  // Close on Escape
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open')
+      .forEach(el => closeModal(el.id));
+  });
+
+  /* ──────────────────────────────────────────
+     Toast
+  ────────────────────────────────────────── */
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+
+  /* ──────────────────────────────────────────
+     Upload PDF
+  ────────────────────────────────────────── */
+  async function uploadPDF() {
+    const input = document.getElementById("pdf-file");
+    const msg   = document.getElementById("upload-msg");
+
+    if (!input.files.length) {
+      msg.style.color = "#e03131";
+      msg.textContent = "Please choose a PDF file first.";
+      return;
+    }
+    const file = input.files[0];
+    if (!file.name.toLowerCase().endsWith(".pdf")) {
+      msg.style.color = "#e03131";
+      msg.textContent = "Only PDF files are accepted.";
+      return;
+    }
+
+    msg.style.color = "#e87722";
+    msg.textContent = `Uploading "${file.name}"…`;
+    state.pending++;
+    renderStats();
+
+    const formData = new FormData();
+    formData.append("pdf", file);
+
+    try {
+      const response = await fetch(`${BASE}/api/upload`, {
+        method: "POST",
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+
+      const data = await response.json();
+      state.pending--;
+
+      if (!response.ok) throw new Error(data.error || data.message || `Upload failed (${response.status})`);
+
+      // Flatten nested response: server returns { pdf: { id }, verification: { hash, ... } }
+      const f = {
+        pdfId:        data.pdf?.id            || data._id || '',
+        hash:         data.verification?.hash  || data.hash || '',
+        pages:        data.verification?.pages || data.pages || 0,
+        riskLevel:    data.verification?.riskLevel  || data.riskLevel  || 'Low',
+        riskScore:    data.verification?.riskScore  || data.riskScore  || 0,
+        hasSignature: data.verification?.isSigned   || data.hasSignature || false,
+        flags:        data.verification?.flags || data.flags || [],
+        tamper:       data.tamper || {},
+        hasJavaScript:    data.hasJavaScript    || false,
+        hasEmbeddedFiles: data.hasEmbeddedFiles || false,
+        metadata:         data.metadata         || {}
+      };
+
+      const result =
+        f.riskLevel !== "Low"         ? "altered" :
+        f.tamper?.signatureTampered   ? "altered" :
+        f.tamper?.deletionDetected    ? "altered" : "verified";
+
+      if (result === "verified") state.verified++;
+      else                       state.altered++;
+
+      state.activities.push({
+        pdfId:                f.pdfId,
+        name:                 file.name,
+        type:                 result,
+        time:                 new Date().toLocaleString(),
+        hash:                 f.hash,
+        riskLevel:            f.riskLevel,
+        riskScore:            f.riskScore,
+        hasSignature:         f.hasSignature,
+        signatureTampered:    f.tamper?.signatureTampered    ?? false,
+        deletionDetected:     f.tamper?.deletionDetected     ?? false,
+        freedObjects:         f.tamper?.freedObjects         ?? 0,
+        hasIncrementalUpdates:f.tamper?.hasIncrementalUpdates ?? false,
+        flags:                f.flags,
+        metadata:             f.metadata
+      });
+
+      saveState();
+      renderStats();
+      renderActivities();
+
+      const riskColor =
+        f.riskLevel === "High"   ? "#e03131" :
+        f.riskLevel === "Medium" ? "#e87722" : "#3dba4e";
+
+      msg.innerHTML = `
+        <div style="border:2px solid ${riskColor};border-radius:10px;padding:16px;margin-top:12px;font-size:.9rem;line-height:1.9">
+          <div style="font-size:1.05rem;font-weight:700;margin-bottom:10px">📄 ${file.name}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-bottom:12px">
+            <div>📊 <strong>Risk Level:</strong>
+              <span style="color:${riskColor};font-weight:700">${f.riskLevel} (${f.riskScore ?? '?'}pts)</span>
+            </div>
+            <div>📑 <strong>Pages:</strong> ${f.pages ?? 'N/A'}</div>
+            <div>✍️ <strong>Signature:</strong>     ${f.hasSignature                ? '✅ Present' : '❌ None'}</div>
+            <div>🔏 <strong>Sig Tampered:</strong>  ${f.tamper?.signatureTampered   ? '⚠️ YES'     : '✅ No'}</div>
+            <div>🗑️ <strong>Deletions:</strong>     ${f.tamper?.deletionDetected    ? `⚠️ YES (${f.tamper.freedObjects} obj)` : '✅ None'}</div>
+            <div>📝 <strong>Updates:</strong>       ${f.tamper?.hasIncrementalUpdates ? `⚠️ ${(f.tamper.eofCount||1) - 1} update(s)` : '✅ None'}</div>
+            <div>⚡ <strong>JavaScript:</strong>    ${f.hasJavaScript                ? '⚠️ Yes'     : '✅ No'}</div>
+            <div>📎 <strong>Embedded Files:</strong>${f.hasEmbeddedFiles             ? '⚠️ Yes'     : '✅ No'}</div>
+          </div>
+          ${f.metadata?.author || f.metadata?.title ? `
+          <div style="margin-bottom:10px;padding:8px;background:#f5f5f5;border-radius:6px;font-size:.85rem">
+            <strong>📋 Metadata</strong><br>
+            ${f.metadata.title   ? `Title: ${f.metadata.title}<br>`    : ''}
+            ${f.metadata.author  ? `Author: ${f.metadata.author}<br>`  : ''}
+            ${f.metadata.creator ? `Creator: ${f.metadata.creator}<br>`: ''}
+            ${f.metadata.created ? `Created: ${f.metadata.created}<br>`: ''}
+          </div>` : ''}
+          <div style="margin-bottom:10px">
+            <strong>🚩 Flags:</strong><br>
+            ${(f.flags.length ? f.flags : ['✅ No threats detected']).join('<br>')}
+          </div>
+          <div style="font-size:.78rem;color:#888;word-break:break-all">🔑 SHA-256: ${f.hash || 'N/A'}</div>
+          ${f.pdfId ? `
+          <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="action-btn btn-verify"   onclick="openVerify('${f.pdfId}')">🔍 Verify</button>
+            <button class="action-btn btn-compare"  onclick="openCompare('${f.pdfId}')">🔄 Compare</button>
+            <button class="action-btn btn-download" onclick="downloadOriginal('${f.pdfId}', '${file.name}')">📥 Download Original</button>
+            <button class="action-btn btn-flag"     onclick="flagForReview('${f.pdfId}', '${file.name}')">🚩 Flag</button>
+          </div>` : ''}
+        </div>
+      `;
+      input.value = "";
+
+    } catch (err) {
+      state.pending--;
+      renderStats();
+      msg.style.color = "#e03131";
+      msg.textContent = `❌ Error: ${err.message}`;
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     Load activities from server
+  ────────────────────────────────────────── */
+  async function loadActivitiesFromServer() {
+    try {
+      const response = await fetch(`${BASE}/api/upload`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+      const data  = await response.json();
+      const files = data.pdfs || [];
+
+      // Reset counters before rebuild to avoid double-counting
+      state.verified = 0;
+      state.altered  = 0;
+      state.activities = [];
+
+      files.forEach(file => {
+        const result =
+          file.riskLevel !== "Low"  ? "altered" :
+          file.signatureTampered    ? "altered" :
+          file.deletionDetected     ? "altered" : "verified";
+
+        state.activities.push({
+          pdfId:                file._id || '',          // ← stored directly
+          name:                 file.originalName || file.filename,
+          type:                 result,
+          time:                 new Date(file.createdAt).toLocaleString(),
+          hash:                 file.hash,
+          riskLevel:            file.riskLevel,
+          hasSignature:         file.hasSignature,
+          signatureTampered:    file.signatureTampered     ?? false,
+          deletionDetected:     file.deletionDetected      ?? false,
+          freedObjects:         file.freedObjects          ?? 0,
+          hasIncrementalUpdates:file.hasIncrementalUpdates ?? false,
+          flags:                file.flags || [],
+          metadata:             file.metadata  || {}
+        });
+
+        if (result === "verified") state.verified++;
+        else                       state.altered++;
+      });
+
+      saveState();
+      renderStats();
+      renderActivities();
+
+    } catch (err) {
+      console.error("❌ Failed to load files from server:", err);
+    }
+  }
+
+  /* ──────────────────────────────────────────
+     Logout
+  ────────────────────────────────────────── */
+  function logout() {
+    localStorage.removeItem("loggedIn");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("tracePdfState");
+    window.location.href = "front.html";
+  }
+
+  /* ── Boot ── */
+  if (loginStatus === "true") {
+    document.getElementById("WelcomeMessage").textContent =
+      `Welcome, ${localStorage.getItem("userName")}`;
+  } else {
+    document.getElementById("WelcomeMessage").textContent = "Welcome, Guest";
+    document.getElementById("guestBanner").classList.add("show");
+  }
+
+  renderStats();
+  renderActivities();
+  loadActivitiesFromServer();
+</script>
+</body>
+</html>

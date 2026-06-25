@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TracePDF - Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar h2 {
+            font-size: 20px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-left: 3px solid white;
+        }
+
+        .logout-btn {
+            margin-top: 40px;
+            padding: 10px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-card.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .stat-card.success {
+            border-left-color: #10b981;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.warning .stat-value {
+            color: #f59e0b;
+        }
+
+        .stat-card.success .stat-value {
+            color: #10b981;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Tables */
+        .section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .section-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .section-content {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f5f7fa;
+            border-bottom: 2px solid #e1e8ed;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e1e8ed;
+            font-size: 14px;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        /* Status Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.signed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.unsigned {
+            background: #fee2e2;
+            color: #7f1d1d;
+        }
+
+        .badge.valid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.invalid {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .badge.admin {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.user {
+            background: #f3e8ff;
+            color: #5b21b6;
+        }
+
+        /* Role Selector */
+        .role-select {
+            padding: 6px 10px;
+            border: 1px solid #e1e8ed;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid #e1e8ed;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #e1e8ed;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .pagination button:hover {
+            background: #f5f7fa;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            padding: 6px 12px;
+            border: 1px solid #e1e8ed;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: #f5f7fa;
+        }
+
+        .action-btn.danger {
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+
+        .action-btn.danger:hover {
+            background: #fee2e2;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-footer button {
+            padding: 10px 20px;
+            border: 1px solid #e1e8ed;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-footer button.primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state p {
+            margin: 10px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            th, td {
+                padding: 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2>TracePDF Admin</h2>
+            <nav>
+                <div class="nav-item active" data-section="dashboard">📊 Dashboard</div>
+                <div class="nav-item" data-section="pdfs">📄 PDF Files</div>
+                <div class="nav-item" data-section="users">👥 Users</div>
+                <div class="nav-item" data-section="logs">📋 Audit Logs</div>
+            </nav>
+            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="header">
+                <h1 id="page-title">Dashboard</h1>
+                <div class="user-info">
+                    <span id="user-email">Loading...</span>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section active">
+                    <div class="section-header">
+                        <h2>System Overview</h2>
+                    </div>
+                    <div class="stats-grid" id="stats-container">
+                        <div class="spinner"></div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px;">
+                        <!-- Recent Verifications -->
+                        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); padding: 20px;">
+                            <h3 style="margin-bottom: 15px; font-weight: 600;">Recent Signature Verifications</h3>
+                            <div id="recent-verifications" style="max-height: 300px; overflow-y: auto;">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Uploads -->
+                        <div style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); padding: 20px;">
+                            <h3 style="margin-bottom: 15px; font-weight: 600;">Recent Uploads</h3>
+                            <div id="recent-uploads" style="max-height: 300px; overflow-y: auto;">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDFs Section -->
+                <div id="pdfs" class="section">
+                    <div class="section-header">
+                        <h2>PDF Files</h2>
+                        <input type="text" id="pdf-search" placeholder="Search PDFs..." style="padding: 8px 12px; border: 1px solid #e1e8ed; border-radius: 4px;">
+                    </div>
+                    <div class="section-content">
+                        <table id="pdfs-table">
+                            <thead>
+                                <tr>
+                                    <th>File Name</th>
+                                    <th>Owner</th>
+                                    <th>Uploaded</th>
+                                    <th>Size</th>
+                                    <th>Signed</th>
+                                    <th>Valid</th>
+                                    <th>Verified</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pdfs-tbody">
+                                <tr><td colspan="8" style="text-align: center; padding: 40px;"><div class="spinner"></div></td></tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="pdfs-pagination"></div>
+                    </div>
+                </div>
+
+                <!-- Users Section -->
+                <div id="users" class="section">
+                    <div class="section-header">
+                        <h2>Users</h2>
+                    </div>
+                    <div class="section-content">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>PDFs</th>
+                                    <th>Created</th>
+                                    <th>Last Login</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="spinner"></div></td></tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="users-pagination"></div>
+                    </div>
+                </div>
+
+                <!-- Audit Logs Section -->
+                <div id="logs" class="section">
+                    <div class="section-header">
+                        <h2>Signature Verification Audit Log</h2>
+                    </div>
+                    <div class="section-content">
+                        <table id="logs-table">
+                            <thead>
+                                <tr>
+                                    <th>Verified At</th>
+                                    <th>PDF</th>
+                                    <th>User</th>
+                                    <th>Signed</th>
+                                    <th>Valid</th>
+                                    <th>Signatures</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-tbody">
+                                <tr><td colspan="7" style="text-align: center; padding: 40px;"><div class="spinner"></div></td></tr>
+                            </tbody>
+                        </table>
+                        <div class="pagination" id="logs-pagination"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Change Modal -->
+    <div id="role-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Change User Role</div>
+            <div class="modal-body">
+                <p id="role-user-email" style="margin-bottom: 15px; font-weight: 600;"></p>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="radio" name="role" value="user"> User
+                </label>
+                <label style="display: block; margin-bottom: 10px;">
+                    <input type="radio" name="role" value="admin"> Admin
+                </label>
+                <label style="display: block;">
+                    <input type="radio" name="role" value="viewer"> Viewer
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeRoleModal()">Cancel</button>
+                <button class="primary" onclick="saveUserRole()">Save</button>
+            </div>
+        </div>
+    </div>
+<script>
+const API_BASE = 'http://127.0.0.1:5000/api';
+let token = localStorage.getItem('token');
+let currentUser = null;
+let currentSection = 'dashboard';
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
+
+    loadUserInfo();
+    loadDashboard();
+    setupNavigation();
+});
+
+// Setup Navigation
+function setupNavigation() {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const section = item.dataset.section;
+            switchSection(section);
+        });
+    });
+}
+
+function switchSection(section) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    
+    document.getElementById(section).classList.add('active');
+    document.querySelector(`[data-section="${section}"]`).classList.add('active');
+    
+    currentSection = section;
+    const titles = {
+        dashboard: '📊 Dashboard',
+        pdfs: '📄 PDF Files',
+        users: '👥 Users',
+        logs: '📋 Audit Logs'
+    };
+    document.getElementById('page-title').textContent = titles[section];
+
+    if (section === 'dashboard') loadDashboard();
+    if (section === 'pdfs') loadPDFs();
+    if (section === 'users') loadUsers();
+    if (section === 'logs') loadLogs();
+}
+
+// Load User Info
+async function loadUserInfo() {
+    try {
+        const response = await fetch(`${API_BASE}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+        
+        currentUser = await response.json();
+        document.getElementById('user-email').textContent = currentUser.email;
+        console.log('✓ Logged in as:', currentUser.email, 'Role:', currentUser.role);
+    } catch (error) {
+        console.error('❌ Error loading user info:', error);
+        alert('Failed to load user info. Try logging in again.');
+    }
+}
+
+// Load Dashboard
+async function loadDashboard() {
+    try {
+        console.log('📊 Fetching dashboard stats...');
+        const response = await fetch(`${API_BASE}/admin/dashboard`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Server returned ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✓ Dashboard data:', data);
+
+        // Stats Cards
+        const statsHTML = `
+            <div class="stat-card">
+                <div class="stat-value">${data.stats.totalPDFs}</div>
+                <div class="stat-label">Total PDFs</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-value">${data.stats.signedPDFs}</div>
+                <div class="stat-label">Digitally Signed</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-value">${data.stats.highRiskPDFs}</div>
+                <div class="stat-label">High-Risk PDFs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${data.stats.totalUsers}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+        `;
+        document.getElementById('stats-container').innerHTML = statsHTML;
+
+        // Recent Verifications
+     const verifications = data.recentVerifications || [];
+const verifHTML = verifications.length > 0
+  ? verifications.map(v => {
+      const pdfName = v.pdf 
+        ? (v.pdf.originalName || v.pdf.filename || 'PDF')
+        : 'Unknown';
+      
+      return `
+        <div style="padding:10px 0;border-bottom:1px solid #e1e8ed;font-size:13px;">
+            <div><strong>${pdfName}</strong></div>
+            <div style="color:#666;font-size:12px;">
+                ${v.isSigned ? '✓ Signed' : '✗ Unsigned'} • ${new Date(v.verifiedAt).toLocaleString()}
+            </div>
+        </div>
+      `;
+    }).join('')
+  : '<div class="empty-state"><p>No verifications yet</p></div>';
+document.getElementById('recent-verifications').innerHTML = verifHTML;
+
+        // Recent Uploads
+        const uploads = data.recentUploads || [];
+        const uploadsHTML = uploads.length > 0
+            ? uploads.map(pdf => `
+                <div style="padding:10px 0;border-bottom:1px solid #e1e8ed;font-size:13px;">
+                    <div><strong>${pdf.filename}</strong></div>
+                    <div style="color:#666;font-size:12px;">
+                        ${new Date(pdf.createdAt).toLocaleString()}
+                    </div>
+                </div>
+            `).join('')
+            : '<div class="empty-state"><p>No uploads yet</p></div>';
+        document.getElementById('recent-uploads').innerHTML = uploadsHTML;
+
+    } catch (error) {
+        console.error('❌ Error loading dashboard:', error);
+        const errorMsg = `<div class="error-state"><p>Error: ${error.message}</p><p style="font-size:12px;color:#666;">Check console for details</p></div>`;
+        document.getElementById('stats-container').innerHTML = errorMsg;
+    }
+}
+
+// Load PDFs
+async function loadPDFs(page = 1) {
+  try {
+    console.log('📄 Fetching PDFs (page ' + page + ')...');
+    const response = await fetch(`${API_BASE}/admin/pdfs?page=${page}&limit=20`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+    const data = await response.json();
+    const pdfs = data.pdfs || [];
+    console.log('✓ PDFs loaded:', pdfs.length);
+
+    const tbody = document.getElementById('pdfs-tbody');
+
+    tbody.innerHTML = pdfs.length > 0
+      ? pdfs.map(pdf => {
+          const riskColor =
+            pdf.riskLevel === 'High' ? '#e03131' :
+            pdf.riskLevel === 'Medium' ? '#e87722' : '#3dba4e';
+
+          const ownerName = pdf.userId 
+            ? (pdf.userId.firstName || pdf.userId.email || 'Unknown')
+            : 'Unknown';
+          const uploadDate = new Date(pdf.createdAt).toLocaleDateString();
+
+          return `
+            <tr>
+              <td>${pdf.originalName || pdf.filename}</td>
+              <td>${ownerName}</td>
+              <td>${uploadDate}</td>
+              <td>${pdf.fileSize ? (pdf.fileSize / 1024).toFixed(2) + ' KB' : 'N/A'}</td>
+              <td>
+                <span style="color:${riskColor};font-weight:700">
+                  ${pdf.riskLevel || 'Low'}
+                </span>
+              </td>
+              <td>${pdf.hasSignature ? ' Yes' : ' No'}</td>
+              <td> No</td>
+              <td> No</td>
+              <td>
+                <td>
+  <button class="action-btn" onclick="compareVersions('${pdf._id}')">
+    Compare
+  </button>
+</td>
+                <button class="action-btn danger" onclick="deletePDF('${pdf._id}')">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="9" class="empty-state"><p>No PDFs found</p></td></tr>';
+
+    if (data.pagination) {
+      renderPagination('pdfs-pagination', data.pagination, (p) => loadPDFs(p));
+    }
+
+  } catch (error) {
+    console.error('❌ Error loading PDFs:', error);
+    document.getElementById('pdfs-tbody').innerHTML =
+      `<tr><td colspan="9" class="error-state"><p>Failed to load PDFs: ${error.message}</p></td></tr>`;
+  }
+}
+// Add function:
+async function compareVersions(pdfId) {
+  try {
+    const response = await fetch(`${API_BASE}/pdf/compare/${pdfId}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    
+    console.log('Comparison Report:', data);
+    
+    // Display in modal/alert
+    alert(`
+      PDF: ${data.pdf.name}
+      
+      Modification Detected: ${data.modificationDetected ? ' YES' : ' NO'}
+      
+      Versions: ${data.analysis.totalVersions}
+      Hash Match: ${data.analysis.hashMatch ? ' Yes' : ' No'}
+      
+      ${data.modifications.map(m => `- ${m.type}: ${m.description}`).join('\n')}
+    `);
+  } catch (error) {
+    console.error('Error comparing:', error);
+  }
+}
+
+// Load Users
+async function loadUsers(page = 1) {
+    try {
+        console.log('👥 Fetching users (page', page + ')...');
+        const response = await fetch(`${API_BASE}/admin/users?page=${page}&limit=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+        const data = await response.json();
+        const users = data.users || [];
+        console.log('✓ Users loaded:', users.length);
+
+        const tbody = document.getElementById('users-tbody');
+        tbody.innerHTML = users.length > 0
+            ? users.map(user => `
+                <tr>
+                    <td>${user.email}</td>
+                    <td><span class="badge ${user.role === 'admin' ? 'admin' : 'user'}">${user.role}</span></td>
+                    <td>${user.pdfCount || 0}</td>
+                    <td>${new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
+                    <td><button class="action-btn" onclick="openRoleModal('${user._id}', '${user.email}', '${user.role}')">Change Role</button></td>
+                </tr>
+            `).join('')
+            : '<tr><td colspan="6" class="empty-state"><p>No users found</p></td></tr>';
+
+        if (data.pagination) {
+            renderPagination('users-pagination', data.pagination, (p) => loadUsers(p));
+        }
+
+    } catch (error) {
+        console.error('❌ Error loading users:', error);
+        document.getElementById('users-tbody').innerHTML =
+            `<tr><td colspan="6" class="error-state"><p>Failed to load users: ${error.message}</p></td></tr>`;
+    }
+}
+
+// Load Audit Logs
+async function loadLogs(page = 1) {
+  try {
+    console.log('📋 Fetching audit logs (page ' + page + ')...');
+    const response = await fetch(`${API_BASE}/admin/signature-logs?page=${page}&limit=20`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+    const data = await response.json();
+    const logs = data.logs || [];
+    console.log('✓ Audit logs loaded:', logs.length);
+
+    const tbody = document.getElementById('logs-tbody');
+    tbody.innerHTML = logs.length > 0
+      ? logs.map(log => {
+          const pdfName = log.pdf && log.pdf[0] 
+            ? (log.pdf[0].originalName || log.pdf[0].filename)
+            : 'Unknown PDF';
+          
+          const userEmail = log.user && log.user[0]
+            ? log.user[0].email
+            : 'Unknown User';
+
+          return `
+            <tr>
+              <td>${new Date(log.verifiedAt).toLocaleString()}</td>
+              <td>${pdfName}</td>
+              <td>${userEmail}</td>
+              <td><span class="badge ${log.isSigned ? 'signed' : 'unsigned'}">
+                ${log.isSigned ? '✓ Signed' : '✗ Unsigned'}
+              </span></td>
+              <td><span class="badge ${log.isValid ? 'valid' : 'invalid'}">
+                ${log.isValid ? '✓ Valid' : '✗ Invalid'}
+              </span></td>
+              <td>${log.signatureCount || 0}</td>
+              <td style="font-size: 12px; color: #666;">${log.message || 'N/A'}</td>
+            </tr>
+          `;
+        }).join('')
+      : '<tr><td colspan="7" class="empty-state"><p>No audit logs found</p></td></tr>';
+
+    if (data.pagination) {
+      renderPagination('logs-pagination', data.pagination, (p) => loadLogs(p));
+    }
+
+  } catch (error) {
+    console.error('❌ Error loading logs:', error);
+    document.getElementById('logs-tbody').innerHTML =
+      `<tr><td colspan="7" class="error-state"><p>Failed to load logs: ${error.message}</p></td></tr>`;
+  }
+}
+
+// Pagination
+function renderPagination(elementId, pagination, callback) {
+    const container = document.getElementById(elementId);
+    let html = '';
+
+    if (pagination.pages > 1) {
+        for (let i = 1; i <= pagination.pages; i++) {
+            html += `<button ${i === pagination.page ? 'class="active"' : ''} onclick="loadPage(${i}, '${callback.toString()}')">${i}</button>`;
+        }
+    }
+
+    container.innerHTML = html;
+}
+
+// Delete PDF
+async function deletePDF(pdfId) {
+    if (!confirm('Are you sure you want to delete this PDF?')) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/admin/pdfs/${pdfId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+        alert('✓ PDF deleted successfully');
+        loadPDFs();
+    } catch (error) {
+        console.error('❌ Error deleting PDF:', error);
+        alert('❌ Failed to delete PDF: ' + error.message);
+    }
+}
+
+// Role Modal
+let selectedUserId = null;
+
+function openRoleModal(userId, email, currentRole) {
+    selectedUserId = userId;
+    document.getElementById('role-user-email').textContent = email;
+    document.querySelector(`input[name="role"][value="${currentRole}"]`).checked = true;
+    document.getElementById('role-modal').classList.add('show');
+}
+
+function closeRoleModal() {
+    document.getElementById('role-modal').classList.remove('show');
+}
+
+async function saveUserRole() {
+    const role = document.querySelector('input[name="role"]:checked').value;
+
+    try {
+        const response = await fetch(`${API_BASE}/admin/users/${selectedUserId}/role`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ role })
+        });
+
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+        alert('✓ User role updated successfully');
+        closeRoleModal();
+        loadUsers();
+    } catch (error) {
+        console.error('❌ Error updating user role:', error);
+        alert('❌ Failed to update user role: ' + error.message);
+    }
+}
+
+// Logout
+function logout() {
+    localStorage.removeItem('token');
+    window.location.href = '/login.html';
+}
+
+// Close modal on background click
+if (document.getElementById('role-modal')) {
+    document.getElementById('role-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'role-modal') closeRoleModal();
+    });
+}
+      </script>
+</body>
+</html>
