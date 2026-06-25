@@ -679,7 +679,7 @@
     document.getElementById('compareModalBody').innerHTML = '<div class="spinner">Loading comparison…</div>';
 
     try {
-      const res  = await fetch(`${BASE}/api/pdf/compare/${pdfId}`, {
+      const res  = await fetch(`${API_BASE}/api/pdf/compare/${pdfId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -772,7 +772,7 @@
   async function downloadOriginal(pdfId, filename) {
     showToast(`📥 Downloading original…`);
     try {
-      const res = await fetch(`${BASE}/api/pdf/download/${pdfId}?version=original`, {
+      const res = await fetch(`${API_BASE}/api/pdf/download/${pdfId}?version=original`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
