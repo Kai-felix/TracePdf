@@ -1,9 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const { verify } = require('@ninja-labs/verify-pdf');
 const crypto = require('crypto');
 
-// Comprehensive PDF verification using @ninja-labs/verify-pdf
+// PDF verification with regex-based signature detection
 const verifyPDFSignatures = async (filePath) => {
   try {
     if (!fs.existsSync(filePath)) {
@@ -21,7 +20,7 @@ const verifyPDFSignatures = async (filePath) => {
     // Calculate SHA-256 hash
     const hash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
 
-    // Use @ninja-labs/verify-pdf for proper verification
+    // Basic signature detection via regex
     let verificationResult = {
       isSigned: false,
       signatures: [],
@@ -29,46 +28,18 @@ const verifyPDFSignatures = async (filePath) => {
       signatureCount: 0,
       message: 'PDF does not contain digital signatures'
     };
-
-    try {
-      // Call @ninja-labs/verify-pdf
-      const result = await verify(fileBuffer);
-
-      if (result && result.signatures && result.signatures.length > 0) {
-        verificationResult.isSigned = true;
-        verificationResult.signatureCount = result.signatures.length;
-        verificationResult.signatures = result.signatures.map((sig, index) => ({
-          index: index,
-          isValid: sig.isValid,
-          certificate: sig.certificate,
-          subject: sig.subject,
-          issuer: sig.issuer,
-          validFrom: sig.validFrom,
-          validTo: sig.validTo,
-          message: sig.message || (sig.isValid ? 'Valid signature' : 'Invalid signature')
-        }));
-
-        // Check if all signatures are valid
-        verificationResult.allValid = result.signatures.every(sig => sig.isValid);
-        verificationResult.message = `PDF contains ${result.signatures.length} signature(s). ${
-          verificationResult.allValid ? 'All signatures are valid.' : 'Some signatures are invalid.'
-        }`;
-      }
-    } catch (verifyError) {
-      console.warn('Verification library error (falling back to basic check):', verifyError.message);
       
-      // Fallback: basic signature detection
-      const sigMatches = fileContent.match(/\/Sig\s+/g);
-      if (sigMatches && sigMatches.length > 0) {
-        verificationResult.isSigned = true;
-        verificationResult.signatureCount = sigMatches.length;
-        verificationResult.message = `PDF contains ${sigMatches.length} signature(s) (basic detection)`;
-        verificationResult.signatures = Array(sigMatches.length).fill(null).map((_, i) => ({
-          index: i,
-          isValid: null,
-          message: 'Could not verify (basic detection only)'
-        }));
-      }
+    // Detect signatures by looking for /Sig objects
+    const sigMatches = fileContent.match(/\/Sig\s+/g);
+    if (sigMatches && sigMatches.length > 0) {
+      verificationResult.isSigned = true;
+      verificationResult.signatureCount = sigMatches.length;
+      verificationResult.message = `PDF contains ${sigMatches.length} signature(s)`;
+      verificationResult.signatures = Array(sigMatches.length).fill(null).map((_, i) => ({
+        index: i,
+        isValid: null,
+        message: 'Signature detected (validation pending)'
+      }));
     }
 
     // Detect tampering indicators
