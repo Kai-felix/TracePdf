@@ -114,13 +114,15 @@ const PDFSchema = new mongoose.Schema({
 
   // Metadata
   metadata: {
-    author: String,
-    title: String,
-    creator: String,
-    created: String,
-    subject: String
-  },
-
+  author: String,
+  title: String,
+  creator: String,
+  created: String,
+  creationDate: String,  // ✅ matches verificationResult.metadata.creationDate
+  modDate: String,       // ✅ also captured by service but was being dropped
+  producer: String,      // ✅ also captured
+  subject: String
+},
   flags: [String],
 
   // Timestamps
