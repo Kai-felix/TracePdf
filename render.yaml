@@ -1,0 +1,11 @@
+routes:
+  - path: /
+    file: index.html
+  - path: /signup
+    file: signup.html
+  - path: /dashboard
+    file: dash.html
+  - path: /admin
+    file: admindashboard.html
+  - path: /*
+    file: index.html
