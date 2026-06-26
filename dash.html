@@ -983,10 +983,20 @@ Create an account to upload PDFs, verify document integrity, access your dashboa
      Load activities from server
   ────────────────────────────────────────── */
   async function loadActivitiesFromServer() {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        console.log("Guest user - skipping server activity loading.");
+        return;
+    }
+
     try {
-      const response = await fetch(`${API_BASE}/upload`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+        const response = await fetch(`${API_BASE}/upload`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
       const data  = await response.json();
