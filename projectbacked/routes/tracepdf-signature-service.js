@@ -97,21 +97,27 @@ const verifyPDFSignatures = async (filePath) => {
       eofCount: 0
     };
 
-    const eofMatches = fileContent.match(/%%EOF/g);
-    tamperDetails.eofCount = eofMatches ? eofMatches.length : 1;
-    tamperDetails.hasIncrementalUpdates = tamperDetails.eofCount > 1;
+  const eofMatches = fileContent.match(/%%EOF/g);
+tamperDetails.eofCount = eofMatches ? eofMatches.length : 1;
 
-    const freedMatches = fileContent.match(/\/Type\s*\/ObjStm.*?\/N\s+(\d+)/gs);
-    if (freedMatches) {
-      tamperDetails.deletionDetected = true;
-      tamperDetails.freedObjects = freedMatches.length;
-    }
+// Signed PDFs legitimately have 2 EOFs (original + signature append)
+// Only flag incremental updates if MORE than 2 EOFs
+tamperDetails.hasIncrementalUpdates = verificationResult.isSigned
+  ? tamperDetails.eofCount > 2   // signed: 2 is normal, 3+ is suspicious
+  : tamperDetails.eofCount > 1;  // unsigned: any extra EOF is suspicious
 
-    // ✅ FIXED: Only flag tampering if signed AND has suspicious updates
-    // (don't flag unsigned PDFs as tampered)
-    if (verificationResult.isSigned && tamperDetails.hasIncrementalUpdates) {
-      tamperDetails.signatureTampered = true;
-    }
+const freedMatches = fileContent.match(/\/Type\s*\/ObjStm.*?\/N\s+(\d+)/gs);
+if (freedMatches) {
+  tamperDetails.deletionDetected = true;
+  tamperDetails.freedObjects = freedMatches.length;
+}
+
+// Only flag tampering if signed AND has MORE than the normal 2 EOFs
+if (verificationResult.isSigned && tamperDetails.eofCount > 2) {
+  tamperDetails.signatureTampered = true;
+} else {
+  tamperDetails.signatureTampered = false; // signing itself is NOT tampering
+}
 
     // ─── Risk scoring ────────────────────────────────────────────────────────
     const hasJavaScript    = /\/JavaScript|\/JS\s+/i.test(fileContent);
