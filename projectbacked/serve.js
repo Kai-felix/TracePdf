@@ -9,29 +9,39 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose"); 
 const app = express();
-const uploadRoutes = require("./routes/upload");
-const pdfComparisonRoutes = require('./routes/pdf-comparison');
+
 // Middleware
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 // Request logging
 app.use((req, res, next) => {
   console.log("REQUEST:", req.method, req.url);
   next();
 });
 
-// Routes
+// ✅ Serve static files (CSS, JS, images, etc.)
+app.use(express.static(path.join(__dirname, "public")));
+
+// ✅ Serve HTML pages
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "dash.html"));
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "admin.html"));
+});
+
+// API Routes
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/upload", require("./routes/upload"));
 app.use("/api/admin", require("./routes/admin"));
-// Either use the variable you already imported:
-app.use("/api/pdf", pdfComparisonRoutes);
+app.use("/api/pdf", require('./routes/pdf-comparison'));
 
 // Health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Server is running" });
-
 });
 
 const PORT = process.env.PORT || 5000;
@@ -45,6 +55,8 @@ async function startServer() {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Health check: http://localhost:${PORT}/health`);
+      console.log(`Dashboard: http://localhost:${PORT}/`);
+      console.log(`Admin: http://localhost:${PORT}/admin`);
     });
 
   } catch (error) {
