@@ -704,13 +704,20 @@ let currentLogsPage = 1;
 let allPDFs = []; // For client-side search
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {  // ← Add 'async' here
     if (!token) {
         window.location.href = '/index.html';
         return;
     }
 
-    loadUserInfo();
+    await loadUserInfo();
+    
+    if (currentUser && currentUser.role !== 'admin') {
+        alert('❌ Access Denied: Only admins can access this page');
+        window.location.href = '/';
+        return;
+    }
+
     loadDashboard();
     setupNavigation();
     setupCloseModals();

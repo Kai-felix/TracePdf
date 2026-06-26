@@ -152,6 +152,7 @@
         localStorage.setItem("userEmail", result.user.email);
         localStorage.setItem("userName", result.user.firstName);
         localStorage.setItem("token", result.token);
+         localStorage.setItem("role", result.user.role); 
 
         showToast("Login successful! Redirecting...", "success");
         setTimeout(() => {
