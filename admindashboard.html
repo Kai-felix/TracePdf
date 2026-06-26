@@ -706,7 +706,7 @@ let allPDFs = []; // For client-side search
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) {
-        window.location.href = '/login.html';
+        window.location.href = '/index.html';
         return;
     }
 
@@ -1321,7 +1321,7 @@ function logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userName');
-        window.location.href = '/login.html';
+        window.location.href = '/index.html';
     }
 }
 </script>
