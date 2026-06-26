@@ -176,11 +176,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .section-header h2 {
             font-size: 18px;
             font-weight: 600;
+        }
+
+        .section-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .section-toolbar input {
+            padding: 8px 12px;
+            border: 1px solid #e1e8ed;
+            border-radius: 4px;
+            font-size: 13px;
+            min-width: 250px;
         }
 
         .section-content {
@@ -256,13 +272,44 @@
             color: #5b21b6;
         }
 
-        /* Role Selector */
-        .role-select {
+        .badge.viewer {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Action Buttons */
+        .action-btn {
             padding: 6px 10px;
             border: 1px solid #e1e8ed;
+            background: white;
             border-radius: 4px;
-            font-size: 13px;
             cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+            margin-right: 5px;
+        }
+
+        .action-btn:hover {
+            background: #f5f7fa;
+        }
+
+        .action-btn.danger {
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+
+        .action-btn.danger:hover {
+            background: #fee2e2;
+        }
+
+        .action-btn.primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .action-btn.primary:hover {
+            background: #5568d3;
         }
 
         /* Pagination */
@@ -293,30 +340,6 @@
             border-color: #667eea;
         }
 
-        /* Action Buttons */
-        .action-btn {
-            padding: 6px 12px;
-            border: 1px solid #e1e8ed;
-            background: white;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.2s;
-        }
-
-        .action-btn:hover {
-            background: #f5f7fa;
-        }
-
-        .action-btn.danger {
-            color: #dc2626;
-            border-color: #fca5a5;
-        }
-
-        .action-btn.danger:hover {
-            background: #fee2e2;
-        }
-
         /* Modal */
         .modal {
             display: none;
@@ -339,14 +362,27 @@
             background: white;
             padding: 30px;
             border-radius: 8px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-header {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
         }
 
         .modal-body {
@@ -399,6 +435,39 @@
             margin: 10px 0;
         }
 
+        .error-state {
+            text-align: center;
+            padding: 40px;
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        .error-state p {
+            margin: 10px 0;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        /* PDF Viewer Modal */
+        .pdf-viewer-container {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #e1e8ed;
+            border-radius: 4px;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .container {
@@ -414,9 +483,28 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .section-toolbar {
+                width: 100%;
+            }
+
+            .section-toolbar input {
+                width: 100%;
+            }
+
             th, td {
                 padding: 10px;
                 font-size: 12px;
+            }
+
+            .action-btn {
+                padding: 5px 8px;
+                font-size: 10px;
+                margin-right: 3px;
             }
         }
     </style>
@@ -477,7 +565,10 @@
                 <div id="pdfs" class="section">
                     <div class="section-header">
                         <h2>PDF Files</h2>
-                        <input type="text" id="pdf-search" placeholder="Search PDFs..." style="padding: 8px 12px; border: 1px solid #e1e8ed; border-radius: 4px;">
+                        <div class="section-toolbar">
+                            <input type="text" id="pdf-search" placeholder="Search by filename..." oninput="searchPDFs()">
+                            <button class="action-btn primary" onclick="refreshPDFList()">🔄 Refresh</button>
+                        </div>
                     </div>
                     <div class="section-content">
                         <table id="pdfs-table">
@@ -487,14 +578,13 @@
                                     <th>Owner</th>
                                     <th>Uploaded</th>
                                     <th>Size</th>
+                                    <th>Risk Level</th>
                                     <th>Signed</th>
-                                    <th>Valid</th>
-                                    <th>Verified</th>
-                                    <th>Action</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="pdfs-tbody">
-                                <tr><td colspan="8" style="text-align: center; padding: 40px;"><div class="spinner"></div></td></tr>
+                                <tr><td colspan="7" style="text-align: center; padding: 40px;"><div class="spinner"></div></td></tr>
                             </tbody>
                         </table>
                         <div class="pagination" id="pdfs-pagination"></div>
@@ -505,6 +595,7 @@
                 <div id="users" class="section">
                     <div class="section-header">
                         <h2>Users</h2>
+                        <button class="action-btn primary" onclick="refreshUserList()">🔄 Refresh</button>
                     </div>
                     <div class="section-content">
                         <table id="users-table">
@@ -530,6 +621,7 @@
                 <div id="logs" class="section">
                     <div class="section-header">
                         <h2>Signature Verification Audit Log</h2>
+                        <button class="action-btn primary" onclick="exportLogs()">📥 Export CSV</button>
                     </div>
                     <div class="section-content">
                         <table id="logs-table">
@@ -558,7 +650,10 @@
     <!-- Role Change Modal -->
     <div id="role-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">Change User Role</div>
+            <div class="modal-header">
+                <span>Change User Role</span>
+                <button class="close-btn" onclick="closeRoleModal()">✕</button>
+            </div>
             <div class="modal-body">
                 <p id="role-user-email" style="margin-bottom: 15px; font-weight: 600;"></p>
                 <label style="display: block; margin-bottom: 10px;">
@@ -577,21 +672,48 @@
             </div>
         </div>
     </div>
+
+    <!-- PDF Viewer Modal -->
+    <div id="pdf-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="pdf-modal-title">PDF Details</span>
+                <button class="close-btn" onclick="closePDFModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="pdf-viewer-container" id="pdf-viewer">
+                    <p>PDF Preview (PDF.js integration required)</p>
+                </div>
+                <div id="pdf-details-info"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closePDFModal()">Close</button>
+                <button class="primary" id="download-pdf-btn" onclick="downloadPDFFromModal()">📥 Download</button>
+            </div>
+        </div>
+    </div>
+
 <script>
 const API_BASE = 'https://tracepdf-backend.onrender.com/api';
 let token = localStorage.getItem('token');
 let currentUser = null;
 let currentSection = 'dashboard';
+let currentPDFPage = 1;
+let currentUsersPage = 1;
+let currentLogsPage = 1;
+let allPDFs = []; // For client-side search
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     if (!token) {
-        window.location.href = '/index.html';
+        window.location.href = '/login.html';
         return;
     }
 
     loadUserInfo();
     loadDashboard();
     setupNavigation();
+    setupCloseModals();
 });
 
 // Setup Navigation
@@ -636,7 +758,7 @@ async function loadUserInfo() {
         if (!response.ok) throw new Error(`Server returned ${response.status}`);
         
         currentUser = await response.json();
-        document.getElementById('user-email').textContent = currentUser.email;
+        document.getElementById('user-email').textContent = currentUser.email + ` (${currentUser.role})`;
         console.log('✓ Logged in as:', currentUser.email, 'Role:', currentUser.role);
     } catch (error) {
         console.error('❌ Error loading user info:', error);
@@ -652,9 +774,7 @@ async function loadDashboard() {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
         const data = await response.json();
         console.log('✓ Dashboard data:', data);
@@ -662,50 +782,49 @@ async function loadDashboard() {
         // Stats Cards
         const statsHTML = `
             <div class="stat-card">
-                <div class="stat-value">${data.stats.totalPDFs}</div>
+                <div class="stat-value">${data.stats.totalPDFs || 0}</div>
                 <div class="stat-label">Total PDFs</div>
             </div>
             <div class="stat-card success">
-                <div class="stat-value">${data.stats.signedPDFs}</div>
+                <div class="stat-value">${data.stats.signedPDFs || 0}</div>
                 <div class="stat-label">Digitally Signed</div>
             </div>
             <div class="stat-card warning">
-                <div class="stat-value">${data.stats.highRiskPDFs}</div>
+                <div class="stat-value">${data.stats.highRiskPDFs || 0}</div>
                 <div class="stat-label">High-Risk PDFs</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">${data.stats.totalUsers}</div>
+                <div class="stat-value">${data.stats.totalUsers || 0}</div>
                 <div class="stat-label">Total Users</div>
             </div>
         `;
         document.getElementById('stats-container').innerHTML = statsHTML;
 
         // Recent Verifications
-     const verifications = data.recentVerifications || [];
-const verifHTML = verifications.length > 0
-  ? verifications.map(v => {
-      const pdfName = v.pdf 
-        ? (v.pdf.originalName || v.pdf.filename || 'PDF')
-        : 'Unknown';
-      
-      return `
-        <div style="padding:10px 0;border-bottom:1px solid #e1e8ed;font-size:13px;">
-            <div><strong>${pdfName}</strong></div>
-            <div style="color:#666;font-size:12px;">
-                ${v.isSigned ? '✓ Signed' : '✗ Unsigned'} • ${new Date(v.verifiedAt).toLocaleString()}
-            </div>
-        </div>
-      `;
-    }).join('')
-  : '<div class="empty-state"><p>No verifications yet</p></div>';
-document.getElementById('recent-verifications').innerHTML = verifHTML;
+        const verifications = data.recentVerifications || [];
+        const verifHTML = verifications.length > 0
+            ? verifications.map(v => {
+                const pdfName = v.pdf 
+                    ? (v.pdf.originalName || v.pdf.filename || 'PDF')
+                    : 'Unknown';
+                return `
+                    <div style="padding:10px 0;border-bottom:1px solid #e1e8ed;font-size:13px;">
+                        <div><strong>${pdfName}</strong></div>
+                        <div style="color:#666;font-size:12px;">
+                            ${v.isSigned ? '✓ Signed' : '✗ Unsigned'} • ${new Date(v.verifiedAt).toLocaleString()}
+                        </div>
+                    </div>
+                `;
+            }).join('')
+            : '<div class="empty-state"><p>No verifications yet</p></div>';
+        document.getElementById('recent-verifications').innerHTML = verifHTML;
 
         // Recent Uploads
         const uploads = data.recentUploads || [];
         const uploadsHTML = uploads.length > 0
             ? uploads.map(pdf => `
                 <div style="padding:10px 0;border-bottom:1px solid #e1e8ed;font-size:13px;">
-                    <div><strong>${pdf.filename}</strong></div>
+                    <div><strong>${pdf.filename || pdf.originalName}</strong></div>
                     <div style="color:#666;font-size:12px;">
                         ${new Date(pdf.createdAt).toLocaleString()}
                     </div>
@@ -716,107 +835,244 @@ document.getElementById('recent-verifications').innerHTML = verifHTML;
 
     } catch (error) {
         console.error('❌ Error loading dashboard:', error);
-        const errorMsg = `<div class="error-state"><p>Error: ${error.message}</p><p style="font-size:12px;color:#666;">Check console for details</p></div>`;
+        const errorMsg = `<div class="error-state"><p>Error: ${error.message}</p></div>`;
         document.getElementById('stats-container').innerHTML = errorMsg;
     }
 }
 
 // Load PDFs
 async function loadPDFs(page = 1) {
-  try {
-    console.log('📄 Fetching PDFs (page ' + page + ')...');
-    const response = await fetch(`${API_BASE}/admin/pdfs?page=${page}&limit=20`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    try {
+        console.log('📄 Fetching PDFs (page ' + page + ')...');
+        const response = await fetch(`${API_BASE}/admin/pdfs?page=${page}&limit=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-    if (!response.ok) throw new Error(`Server returned ${response.status}`);
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
-    const data = await response.json();
-    const pdfs = data.pdfs || [];
-    console.log('✓ PDFs loaded:', pdfs.length);
+        const data = await response.json();
+        const pdfs = data.pdfs || [];
+        allPDFs = pdfs; // Store for search
+        console.log('✓ PDFs loaded:', pdfs.length);
 
+        const tbody = document.getElementById('pdfs-tbody');
+
+        tbody.innerHTML = pdfs.length > 0
+            ? pdfs.map(pdf => {
+                const riskColor =
+                    pdf.riskLevel === 'High' ? '#e03131' :
+                    pdf.riskLevel === 'Medium' ? '#e87722' : '#3dba4e';
+
+                const ownerName = pdf.userId 
+                    ? (pdf.userId.firstName || pdf.userId.email || 'Unknown')
+                    : 'Unknown';
+                const uploadDate = new Date(pdf.createdAt).toLocaleDateString();
+
+                return `
+                    <tr>
+                        <td>${pdf.originalName || pdf.filename}</td>
+                        <td>${ownerName}</td>
+                        <td>${uploadDate}</td>
+                        <td>${pdf.fileSize ? (pdf.fileSize / 1024).toFixed(2) + ' KB' : 'N/A'}</td>
+                        <td>
+                            <span style="color:${riskColor};font-weight:700">
+                                ${pdf.riskLevel || 'Low'}
+                            </span>
+                        </td>
+                        <td>${pdf.hasSignature ? '✓ Yes' : '✗ No'}</td>
+                        <td>
+                            <button class="action-btn" onclick="viewPDF('${pdf._id}', '${(pdf.originalName || pdf.filename).replace(/'/g, "\\'")}')">👁️ View</button>
+                            <button class="action-btn" onclick="compareVersions('${pdf._id}')">🔍 Compare</button>
+                            <button class="action-btn" onclick="downloadPDF('${pdf._id}', '${(pdf.originalName || pdf.filename).replace(/'/g, "\\'")}')">📥 Download</button>
+                            <button class="action-btn danger" onclick="deletePDF('${pdf._id}')">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('')
+            : '<tr><td colspan="7" class="empty-state"><p>No PDFs found</p></td></tr>';
+
+        if (data.pagination) {
+            renderPagination('pdfs-pagination', data.pagination, () => loadPDFs(currentPDFPage));
+        }
+
+    } catch (error) {
+        console.error('❌ Error loading PDFs:', error);
+        document.getElementById('pdfs-tbody').innerHTML =
+            `<tr><td colspan="7" class="error-state"><p>Failed to load PDFs: ${error.message}</p></td></tr>`;
+    }
+}
+
+// Search PDFs (client-side)
+function searchPDFs() {
+    const searchTerm = document.getElementById('pdf-search').value.toLowerCase();
     const tbody = document.getElementById('pdfs-tbody');
-
-    tbody.innerHTML = pdfs.length > 0
-      ? pdfs.map(pdf => {
-          const riskColor =
-            pdf.riskLevel === 'High' ? '#e03131' :
-            pdf.riskLevel === 'Medium' ? '#e87722' : '#3dba4e';
-
-          const ownerName = pdf.userId 
-            ? (pdf.userId.firstName || pdf.userId.email || 'Unknown')
-            : 'Unknown';
-          const uploadDate = new Date(pdf.createdAt).toLocaleDateString();
-
-          return `
-            <tr>
-              <td>${pdf.originalName || pdf.filename}</td>
-              <td>${ownerName}</td>
-              <td>${uploadDate}</td>
-              <td>${pdf.fileSize ? (pdf.fileSize / 1024).toFixed(2) + ' KB' : 'N/A'}</td>
-              <td>
-                <span style="color:${riskColor};font-weight:700">
-                  ${pdf.riskLevel || 'Low'}
-                </span>
-              </td>
-              <td>${pdf.hasSignature ? ' Yes' : ' No'}</td>
-              <td> No</td>
-              <td> No</td>
-              <td>
-                <td>
-  <button class="action-btn" onclick="compareVersions('${pdf._id}')">
-    Compare
-  </button>
-</td>
-                <button class="action-btn danger" onclick="deletePDF('${pdf._id}')">
-                  Delete
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('')
-      : '<tr><td colspan="9" class="empty-state"><p>No PDFs found</p></td></tr>';
-
-    if (data.pagination) {
-      renderPagination('pdfs-pagination', data.pagination, (p) => loadPDFs(p));
+    
+    if (!searchTerm) {
+        loadPDFs();
+        return;
     }
 
-  } catch (error) {
-    console.error('❌ Error loading PDFs:', error);
-    document.getElementById('pdfs-tbody').innerHTML =
-      `<tr><td colspan="9" class="error-state"><p>Failed to load PDFs: ${error.message}</p></td></tr>`;
-  }
-}
-// Add function:
-async function compareVersions(pdfId) {
-  try {
-    const response = await fetch(`${API_BASE}/pdf/compare/${pdfId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+    const filtered = allPDFs.filter(pdf => {
+        const fileName = (pdf.originalName || pdf.filename || '').toLowerCase();
+        const ownerName = pdf.userId 
+            ? (pdf.userId.firstName || pdf.userId.email || '').toLowerCase()
+            : '';
+        return fileName.includes(searchTerm) || ownerName.includes(searchTerm);
     });
-    const data = await response.json();
-    
-    console.log('Comparison Report:', data);
-    
-    // Display in modal/alert
-    alert(`
-      PDF: ${data.pdf.name}
-      
-      Modification Detected: ${data.modificationDetected ? ' YES' : ' NO'}
-      
-      Versions: ${data.analysis.totalVersions}
-      Hash Match: ${data.analysis.hashMatch ? ' Yes' : ' No'}
-      
-      ${data.modifications.map(m => `- ${m.type}: ${m.description}`).join('\n')}
-    `);
-  } catch (error) {
-    console.error('Error comparing:', error);
-  }
+
+    tbody.innerHTML = filtered.length > 0
+        ? filtered.map(pdf => {
+            const riskColor =
+                pdf.riskLevel === 'High' ? '#e03131' :
+                pdf.riskLevel === 'Medium' ? '#e87722' : '#3dba4e';
+
+            const ownerName = pdf.userId 
+                ? (pdf.userId.firstName || pdf.userId.email || 'Unknown')
+                : 'Unknown';
+            const uploadDate = new Date(pdf.createdAt).toLocaleDateString();
+
+            return `
+                <tr>
+                    <td>${pdf.originalName || pdf.filename}</td>
+                    <td>${ownerName}</td>
+                    <td>${uploadDate}</td>
+                    <td>${pdf.fileSize ? (pdf.fileSize / 1024).toFixed(2) + ' KB' : 'N/A'}</td>
+                    <td>
+                        <span style="color:${riskColor};font-weight:700">
+                            ${pdf.riskLevel || 'Low'}
+                        </span>
+                    </td>
+                    <td>${pdf.hasSignature ? '✓ Yes' : '✗ No'}</td>
+                    <td>
+                        <button class="action-btn" onclick="viewPDF('${pdf._id}', '${(pdf.originalName || pdf.filename).replace(/'/g, "\\'")}')">👁️ View</button>
+                        <button class="action-btn" onclick="compareVersions('${pdf._id}')">🔍 Compare</button>
+                        <button class="action-btn" onclick="downloadPDF('${pdf._id}', '${(pdf.originalName || pdf.filename).replace(/'/g, "\\'")}')">📥 Download</button>
+                        <button class="action-btn danger" onclick="deletePDF('${pdf._id}')">🗑️ Delete</button>
+                    </td>
+                </tr>
+            `;
+        }).join('')
+        : '<tr><td colspan="7" class="empty-state"><p>No PDFs match your search</p></td></tr>';
+}
+
+function refreshPDFList() {
+    currentPDFPage = 1;
+    document.getElementById('pdf-search').value = '';
+    loadPDFs();
+}
+
+// View PDF
+async function viewPDF(pdfId, pdfName) {
+    try {
+        const response = await fetch(`${API_BASE}/pdf/${pdfId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to load PDF details');
+
+        const pdf = await response.json();
+
+        document.getElementById('pdf-modal-title').textContent = `📄 ${pdfName}`;
+        document.getElementById('pdf-viewer').innerHTML = `
+            <p>⚠️ PDF Preview not available. Use Download to view.</p>
+        `;
+
+        document.getElementById('pdf-details-info').innerHTML = `
+            <div style="background: #f5f7fa; padding: 15px; border-radius: 4px;">
+                <p><strong>File Name:</strong> ${pdf.originalName || pdf.filename}</p>
+                <p><strong>File Size:</strong> ${(pdf.fileSize / 1024).toFixed(2)} KB</p>
+                <p><strong>Uploaded:</strong> ${new Date(pdf.createdAt).toLocaleString()}</p>
+                <p><strong>Risk Level:</strong> <span style="color: ${pdf.riskLevel === 'High' ? '#e03131' : pdf.riskLevel === 'Medium' ? '#e87722' : '#3dba4e'}; font-weight: 700;">${pdf.riskLevel || 'Low'}</span></p>
+                <p><strong>Has Signature:</strong> ${pdf.hasSignature ? '✓ Yes' : '✗ No'}</p>
+                <p><strong>Has JavaScript:</strong> ${pdf.hasJavaScript ? '⚠️ Yes' : '✓ No'}</p>
+                <p><strong>Embedded Files:</strong> ${pdf.hasEmbeddedFiles ? '⚠️ Yes' : '✓ No'}</p>
+            </div>
+        `;
+
+        // Store current PDF ID for download
+        window.currentPDFId = pdfId;
+        window.currentPDFName = pdfName;
+
+        document.getElementById('pdf-modal').classList.add('show');
+    } catch (error) {
+        console.error('❌ Error loading PDF:', error);
+        alert('Failed to load PDF details: ' + error.message);
+    }
+}
+
+// Download PDF from Modal
+function downloadPDFFromModal() {
+    downloadPDF(window.currentPDFId, window.currentPDFName);
+}
+
+// Download PDF
+async function downloadPDF(pdfId, pdfName) {
+    try {
+        console.log('📥 Downloading PDF:', pdfId);
+        
+        const response = await fetch(`${API_BASE}/pdf/download/${pdfId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = pdfName || ('pdf-' + pdfId + '.pdf');
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        console.log('✓ PDF downloaded successfully');
+    } catch (error) {
+        console.error('❌ Error downloading PDF:', error);
+        alert('Failed to download PDF: ' + error.message);
+    }
+}
+
+// Compare Versions
+async function compareVersions(pdfId) {
+    try {
+        console.log('🔍 Comparing PDF versions:', pdfId);
+        const response = await fetch(`${API_BASE}/pdf/compare/${pdfId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Comparison failed');
+
+        const data = await response.json();
+        console.log('✓ Comparison Report:', data);
+
+        const mods = data.modifications && data.modifications.length > 0
+            ? data.modifications.map(m => `• ${m.type}: ${m.description}`).join('\n')
+            : '• No modifications detected';
+
+        alert(`
+📊 PDF Comparison Report
+━━━━━━━━━━━━━━━━━━━━━━
+File: ${data.pdf.name}
+
+Modification Detected: ${data.modificationDetected ? '⚠️ YES' : '✓ NO'}
+
+Versions: ${data.analysis.totalVersions}
+Hash Match: ${data.analysis.hashMatch ? '✓ Yes' : '✗ No'}
+
+Modifications:
+${mods}
+        `);
+    } catch (error) {
+        console.error('❌ Error comparing:', error);
+        alert('Failed to compare PDF: ' + error.message);
+    }
 }
 
 // Load Users
 async function loadUsers(page = 1) {
     try {
-        console.log('👥 Fetching users (page', page + ')...');
+        console.log('👥 Fetching users (page ' + page + ')...');
         const response = await fetch(`${API_BASE}/admin/users?page=${page}&limit=20`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -832,19 +1088,20 @@ async function loadUsers(page = 1) {
             ? users.map(user => `
                 <tr>
                     <td>${user.email}</td>
-                    <td><span class="badge ${user.role === 'admin' ? 'admin' : 'user'}">${user.role}</span></td>
+                    <td><span class="badge ${user.role === 'admin' ? 'admin' : user.role === 'viewer' ? 'viewer' : 'user'}">${user.role}</span></td>
                     <td>${user.pdfCount || 0}</td>
                     <td>${new Date(user.createdAt).toLocaleDateString()}</td>
                     <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
-                    <td><button class="action-btn" onclick="openRoleModal('${user._id}', '${user.email}', '${user.role}')">Change Role</button></td>
+                    <td><button class="action-btn" onclick="openRoleModal('${user._id}', '${user.email}', '${user.role}')">🔑 Change Role</button></td>
                 </tr>
             `).join('')
             : '<tr><td colspan="6" class="empty-state"><p>No users found</p></td></tr>';
 
         if (data.pagination) {
-            renderPagination('users-pagination', data.pagination, (p) => loadUsers(p));
+            renderPagination('users-pagination', data.pagination, () => loadUsers(currentUsersPage));
         }
 
+        currentUsersPage = page;
     } catch (error) {
         console.error('❌ Error loading users:', error);
         document.getElementById('users-tbody').innerHTML =
@@ -852,58 +1109,109 @@ async function loadUsers(page = 1) {
     }
 }
 
+function refreshUserList() {
+    currentUsersPage = 1;
+    loadUsers();
+}
+
 // Load Audit Logs
 async function loadLogs(page = 1) {
-  try {
-    console.log('📋 Fetching audit logs (page ' + page + ')...');
-    const response = await fetch(`${API_BASE}/admin/signature-logs?page=${page}&limit=20`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
+    try {
+        console.log('📋 Fetching audit logs (page ' + page + ')...');
+        const response = await fetch(`${API_BASE}/admin/signature-logs?page=${page}&limit=20`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-    if (!response.ok) throw new Error(`Server returned ${response.status}`);
+        if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
-    const data = await response.json();
-    const logs = data.logs || [];
-    console.log('✓ Audit logs loaded:', logs.length);
+        const data = await response.json();
+        const logs = data.logs || [];
+        console.log('✓ Audit logs loaded:', logs.length);
 
-    const tbody = document.getElementById('logs-tbody');
-    tbody.innerHTML = logs.length > 0
-      ? logs.map(log => {
-          const pdfName = log.pdf && log.pdf[0] 
-            ? (log.pdf[0].originalName || log.pdf[0].filename)
-            : 'Unknown PDF';
-          
-          const userEmail = log.user && log.user[0]
-            ? log.user[0].email
-            : 'Unknown User';
+        const tbody = document.getElementById('logs-tbody');
+        tbody.innerHTML = logs.length > 0
+            ? logs.map(log => {
+                const pdfName = log.pdf && log.pdf[0] 
+                    ? (log.pdf[0].originalName || log.pdf[0].filename)
+                    : 'Unknown PDF';
+                
+                const userEmail = log.user && log.user[0]
+                    ? log.user[0].email
+                    : 'Unknown User';
 
-          return `
-            <tr>
-              <td>${new Date(log.verifiedAt).toLocaleString()}</td>
-              <td>${pdfName}</td>
-              <td>${userEmail}</td>
-              <td><span class="badge ${log.isSigned ? 'signed' : 'unsigned'}">
-                ${log.isSigned ? '✓ Signed' : '✗ Unsigned'}
-              </span></td>
-              <td><span class="badge ${log.isValid ? 'valid' : 'invalid'}">
-                ${log.isValid ? '✓ Valid' : '✗ Invalid'}
-              </span></td>
-              <td>${log.signatureCount || 0}</td>
-              <td style="font-size: 12px; color: #666;">${log.message || 'N/A'}</td>
-            </tr>
-          `;
-        }).join('')
-      : '<tr><td colspan="7" class="empty-state"><p>No audit logs found</p></td></tr>';
+                return `
+                    <tr>
+                        <td>${new Date(log.verifiedAt).toLocaleString()}</td>
+                        <td>${pdfName}</td>
+                        <td>${userEmail}</td>
+                        <td><span class="badge ${log.isSigned ? 'signed' : 'unsigned'}">
+                            ${log.isSigned ? '✓ Signed' : '✗ Unsigned'}
+                        </span></td>
+                        <td><span class="badge ${log.isValid ? 'valid' : 'invalid'}">
+                            ${log.isValid ? '✓ Valid' : '✗ Invalid'}
+                        </span></td>
+                        <td>${log.signatureCount || 0}</td>
+                        <td style="font-size: 12px; color: #666;">${log.message || 'N/A'}</td>
+                    </tr>
+                `;
+            }).join('')
+            : '<tr><td colspan="7" class="empty-state"><p>No audit logs found</p></td></tr>';
 
-    if (data.pagination) {
-      renderPagination('logs-pagination', data.pagination, (p) => loadLogs(p));
+        if (data.pagination) {
+            renderPagination('logs-pagination', data.pagination, () => loadLogs(currentLogsPage));
+        }
+
+        currentLogsPage = page;
+    } catch (error) {
+        console.error('❌ Error loading logs:', error);
+        document.getElementById('logs-tbody').innerHTML =
+            `<tr><td colspan="7" class="error-state"><p>Failed to load logs: ${error.message}</p></td></tr>`;
     }
+}
 
-  } catch (error) {
-    console.error('❌ Error loading logs:', error);
-    document.getElementById('logs-tbody').innerHTML =
-      `<tr><td colspan="7" class="error-state"><p>Failed to load logs: ${error.message}</p></td></tr>`;
-  }
+// Export Logs to CSV
+function exportLogs() {
+    try {
+        const tbody = document.getElementById('logs-tbody');
+        const rows = tbody.querySelectorAll('tr');
+        
+        if (rows.length === 0) {
+            alert('No logs to export');
+            return;
+        }
+
+        let csv = 'Verified At,PDF,User,Signed,Valid,Signatures,Message\n';
+        
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                const rowData = Array.from(cells).map(cell => {
+                    let text = cell.textContent.trim();
+                    // Escape quotes and wrap in quotes if contains comma
+                    if (text.includes(',')) {
+                        text = `"${text.replace(/"/g, '""')}"`;
+                    }
+                    return text;
+                }).join(',');
+                csv += rowData + '\n';
+            }
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'audit-logs-' + new Date().toISOString().split('T')[0] + '.csv';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        console.log('✓ Logs exported successfully');
+    } catch (error) {
+        console.error('❌ Error exporting logs:', error);
+        alert('Failed to export logs: ' + error.message);
+    }
 }
 
 // Pagination
@@ -913,16 +1221,30 @@ function renderPagination(elementId, pagination, callback) {
 
     if (pagination.pages > 1) {
         for (let i = 1; i <= pagination.pages; i++) {
-            html += `<button ${i === pagination.page ? 'class="active"' : ''} onclick="loadPage(${i}, '${callback.toString()}')">${i}</button>`;
+            const isActive = i === pagination.page ? 'active' : '';
+            html += `<button class="${isActive}" onclick="goToPage(${i}, '${elementId}')">${i}</button>`;
         }
     }
 
     container.innerHTML = html;
 }
 
+function goToPage(page, paginationId) {
+    if (paginationId.includes('pdfs')) {
+        currentPDFPage = page;
+        loadPDFs(page);
+    } else if (paginationId.includes('users')) {
+        currentUsersPage = page;
+        loadUsers(page);
+    } else if (paginationId.includes('logs')) {
+        currentLogsPage = page;
+        loadLogs(page);
+    }
+}
+
 // Delete PDF
 async function deletePDF(pdfId) {
-    if (!confirm('Are you sure you want to delete this PDF?')) return;
+    if (!confirm('⚠️ Are you sure you want to delete this PDF? This action cannot be undone.')) return;
 
     try {
         const response = await fetch(`${API_BASE}/admin/pdfs/${pdfId}`, {
@@ -933,7 +1255,7 @@ async function deletePDF(pdfId) {
         if (!response.ok) throw new Error(`Server returned ${response.status}`);
 
         alert('✓ PDF deleted successfully');
-        loadPDFs();
+        loadPDFs(currentPDFPage);
     } catch (error) {
         console.error('❌ Error deleting PDF:', error);
         alert('❌ Failed to delete PDF: ' + error.message);
@@ -945,7 +1267,7 @@ let selectedUserId = null;
 
 function openRoleModal(userId, email, currentRole) {
     selectedUserId = userId;
-    document.getElementById('role-user-email').textContent = email;
+    document.getElementById('role-user-email').textContent = `Email: ${email}`;
     document.querySelector(`input[name="role"][value="${currentRole}"]`).checked = true;
     document.getElementById('role-modal').classList.add('show');
 }
@@ -971,25 +1293,38 @@ async function saveUserRole() {
 
         alert('✓ User role updated successfully');
         closeRoleModal();
-        loadUsers();
+        loadUsers(currentUsersPage);
     } catch (error) {
         console.error('❌ Error updating user role:', error);
         alert('❌ Failed to update user role: ' + error.message);
     }
 }
 
-// Logout
-function logout() {
-    localStorage.removeItem('token');
-    window.location.href = '/login.html';
-}
-
-// Close modal on background click
-if (document.getElementById('role-modal')) {
+// Close Modals
+function setupCloseModals() {
     document.getElementById('role-modal').addEventListener('click', (e) => {
         if (e.target.id === 'role-modal') closeRoleModal();
     });
+
+    document.getElementById('pdf-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'pdf-modal') closePDFModal();
+    });
 }
-      </script>
+
+function closePDFModal() {
+    document.getElementById('pdf-modal').classList.remove('show');
+}
+
+// Logout
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userName');
+        window.location.href = '/login.html';
+    }
+}
+</script>
+
 </body>
 </html>

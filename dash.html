@@ -679,7 +679,7 @@
     document.getElementById('compareModalBody').innerHTML = '<div class="spinner">Loading comparison…</div>';
 
     try {
-      const res  = await fetch(`${API_BASE}/api/pdf/compare/${pdfId}`, {
+      const res  = await fetch(`${API_BASE}/pdf/compare/${pdfId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -772,7 +772,7 @@
   async function downloadOriginal(pdfId, filename) {
     showToast(`📥 Downloading original…`);
     try {
-      const res = await fetch(`${API_BASE}/api/pdf/download/${pdfId}?version=original`, {
+      const res = await fetch(`${API_BASE}/pdf/download/${pdfId}?version=original`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
@@ -796,7 +796,7 @@
     if (!confirm(`Flag "${filename}" for admin review? This will notify the TracePdf team.`)) return;
     showToast('🚩 Flagging for review…');
     try {
-      const res = await fetch(`${BASE}/api/pdf/flag/${pdfId}`, {
+      const res = await fetch(`${API_BASE}/pdf/flag/${pdfId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -873,7 +873,7 @@
     formData.append("pdf", file);
 
     try {
-      const response = await fetch(`${BASE}/api/upload`, {
+      const response = await fetch(`${API_BASE}/upload`, {
         method: "POST",
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -984,7 +984,7 @@
   ────────────────────────────────────────── */
   async function loadActivitiesFromServer() {
     try {
-      const response = await fetch(`${BASE}/api/upload`, {
+      const response = await fetch(`${API_BASE}/upload`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
