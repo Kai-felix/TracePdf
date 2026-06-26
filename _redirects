@@ -1,0 +1,4 @@
+/signup  /signup.html  200
+/dashboard  /dash.html  200
+/admin  /admindashboard.html  200
+/*  /index.html  200
