@@ -933,10 +933,6 @@ Create an account to upload PDFs, verify document integrity, access your dashboa
 
       msg.innerHTML = `
         <div style="border:2px solid ${riskColor};border-radius:10px;padding:16px;margin-top:12px;font-size:.9rem;line-height:1.9">
-          input.value = "";
-setTimeout(() => {
-  msg.textContent = '';
-}, 5000);
           <div style="font-size:1.05rem;font-weight:700;margin-bottom:10px">📄 ${file.name}</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin-bottom:12px">
             <div>📊 <strong>Risk Level:</strong>
@@ -972,7 +968,10 @@ setTimeout(() => {
           </div>` : ''}
         </div>
       `;
-      input.value = "";
+               input.value = "";
+setTimeout(() => {
+  msg.textContent = '';
+}, 5000);
 
     } catch (err) {
       state.pending--;
