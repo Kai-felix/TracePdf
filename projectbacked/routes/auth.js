@@ -77,11 +77,6 @@ router.post("/login", async (req, res) => {
     const password = req.body.password;
 
     const user = await User.findOne({ email });
-// TEMPORARY: Make your account an admin
-if (user && user.email === "allankyc02@gmail.com") {
-  user.role = "admin";
-  await user.save();
-}
     console.log("USER FOUND:", user);
 
     if (!user) {

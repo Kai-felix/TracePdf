@@ -155,10 +155,10 @@
          localStorage.setItem("role", result.user.role); 
 
         showToast("Login successful! Redirecting...", "success");
+const destination = result.user.role === "admin" ? "admindashboard.html" : "dash.html";
         setTimeout(() => {
-          window.location.href = "dash.html";
         }, 1500);
-      } else {
+      } else {      
         showToast(result.message || result.error || "Login failed", "error");
       }
     } catch (error) {
